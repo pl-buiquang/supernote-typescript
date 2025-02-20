@@ -22,6 +22,8 @@ export interface ISupernote {
 	keywords: Record<string, IKeyword[]>;
 	/** Title locations and styles. */
 	titles: Record<string, ITitle[]>;
+	/** Links locations and styles. */
+	links: Record<string, ILink[]>;
 	/** Pages information. */
 	pages: IPage[];
 	/** Cover page. */
@@ -97,6 +99,20 @@ export interface ITitle {
 	bitmapBuffer: Uint8Array | null;
 }
 
+export interface ILink {
+	/** Link sequence number. */
+	LINKSEQNO: string;
+	LINKFILE: string;
+	LINKFILEID: string;
+	LINKINOUT: string;
+	LINKPROTOCAL: string;
+	LINKRECT: IRectangle;
+	LINKRECTORI: IRectangle;
+	OBJPAGE: string;
+	PAGEID: string;
+	bitmapBuffer: Uint8Array | null;
+}
+
 export type ILayerNames =
 	| 'MAINLAYER'
 	| 'LAYER1'
@@ -134,7 +150,7 @@ export interface IRecognitionElement {
 	type: string;
 	words: {
 		label: string;
-		"bounding-box"?: {
+		'bounding-box'?: {
 			height: number;
 			width: number;
 			x: number;
@@ -186,8 +202,6 @@ export interface IPage {
 	totalPathBuffer: Uint8Array | null;
 }
 
-
-
 export interface ILayerInfo {
 	/** Layer ID number. -1 (background), 0 (main) ... 3 (layer3) */
 	layerId: number;
@@ -218,6 +232,8 @@ export interface IFooter {
 	KEYWORD: Record<string, string | string[]>;
 	/** Title values. Mappings of TITLE_{key}:{value}. */
 	TITLE: Record<string, string | string[]>;
+	/** Link values. Mappings of LINK_{key}:{value}. */
+	LINKO: Record<string, string | string[]>;
 	/** Style values. Mappings of STYLE_{key}:{value}. */
 	STYLE: Record<string, string>;
 	/** Page values. Mappings of PAGE{key}:{value}. */

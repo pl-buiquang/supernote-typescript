@@ -11,6 +11,7 @@ import {
 	IPage,
 	ISupernote,
 	ITitle,
+	ILink,
 } from './format';
 
 /*
@@ -78,7 +79,7 @@ export function extractKeyValue(
 	const data = pairs.reduce(
 		(acc: Record<string, string | string[]>, [_, key, value]) => {
 			if (key in acc) {
-				let newValue =
+				const newValue =
 					typeof acc[key] === 'string'
 						? [acc[key] as string, value]
 						: [...acc[key], value];
@@ -187,7 +188,7 @@ function uint8ArrayToString(
 }
 
 /** Supernote X series note. */
-export interface SupernoteX extends ISupernote { }
+export interface SupernoteX extends ISupernote {}
 export class SupernoteX {
 	constructor(buffer: Uint8Array) {
 		this.pageWidth = 1404;
@@ -206,13 +207,14 @@ export class SupernoteX {
 		// Manta is the first Supernote device to have a different
 		// pageWidth and pageHeight
 		if (this.header.APPLY_EQUIPMENT == 'N5') {
-			this.pageWidth = 1920
+			this.pageWidth = 1920;
 			this.pageHeight = 2560;
 		}
 		this._parsePages(buffer);
 		this._parseCover(buffer);
 		this._parseKeywords(buffer);
 		this._parseTitles(buffer);
+		this._parseLinks(buffer);
 		return this;
 	}
 
@@ -241,6 +243,7 @@ export class SupernoteX {
 			TITLE: {},
 			STYLE: {},
 			PAGE: {},
+			LINKO: {},
 			...nested,
 		};
 		return this.footer;
@@ -281,7 +284,8 @@ export class SupernoteX {
 			.map((idx) => {
 				const address = parseInt(this.footer.PAGE[idx]);
 				const data = parseKeyValue(buffer, address, this.lengthFieldSize);
-				const recognitionElements = this._parseRecognition(buffer, data['RECOGNTEXT'] as string) || [];
+				const recognitionElements =
+					this._parseRecognition(buffer, data['RECOGNTEXT'] as string) || [];
 				return {
 					PAGESTYLE: '0',
 					PAGESTYLEMD5: '0',
@@ -348,7 +352,7 @@ export class SupernoteX {
 
 		const elements: IRecognitionElement[] = recogn.elements || [];
 
-		return elements
+		return elements;
 	}
 
 	_extractText(elements: IRecognitionElement[]) {
@@ -356,22 +360,24 @@ export class SupernoteX {
 			.filter((e: any) => e.type === 'Text')
 			.map((e: any) => decodeURIComponent(escape(e.label))); // Decode using windows-1254 encoding
 
-		return labels.join("\n");
+		return labels.join('\n');
 	}
 
 	_extractParagraphs(elements: IRecognitionElement[]) {
 		// Filter text elements and get their bounding boxes
 		const textElements = elements
-			.filter(e => e.type === 'Text')
-			.map(e => ({
+			.filter((e) => e.type === 'Text')
+			.map((e) => ({
 				text: decodeURIComponent(escape(e.label)),
-				box: e.words[0]?.['bounding-box']
+				box: e.words[0]?.['bounding-box'],
 			}))
-			.filter(e => e.box); // Only keep elements with valid bounding boxes
+			.filter((e) => e.box); // Only keep elements with valid bounding boxes
 
 		if (textElements.length === 0) return '';
 
-		const avgLineHeight = textElements.reduce((sum, e) => sum + (e.box?.height || 0), 0) / textElements.length;
+		const avgLineHeight =
+			textElements.reduce((sum, e) => sum + (e.box?.height || 0), 0) /
+			textElements.length;
 
 		// Sort by vertical position first, then horizontal
 		textElements.sort((a, b) => {
@@ -398,13 +404,14 @@ export class SupernoteX {
 
 				if (isNewParagraph) {
 					result += '\n\n';
-				} else if (currentX < lastX) { // Same paragraph
+				} else if (currentX < lastX) {
+					// Same paragraph
 					result += ' ';
-				} else { // Same line
+				} else {
+					// Same line
 					result += ' ';
 				}
 			}
-
 
 			const trimmed = element.text.replace(/\n/g, ' ');
 			result += trimmed;
@@ -523,5 +530,33 @@ export class SupernoteX {
 			bitmapBuffer,
 		};
 		return title;
+	}
+
+	_parseLinks(buffer: Uint8Array): Record<string, ILink[]> {
+		this.links = {};
+		Object.entries(this.footer.LINKO).forEach(([key, value]) => {
+			this.links[key] = [];
+			if (typeof value === 'string')
+				this.links[key].push(this._parseLink(buffer, parseInt(value)));
+			else
+				value.forEach((address) =>
+					this.links[key].push(this._parseLink(buffer, parseInt(address))),
+				);
+		});
+		return this.links;
+	}
+
+	_parseLink(buffer: Uint8Array, address: number): ILink {
+		const data = parseKeyValue(buffer, address, this.lengthFieldSize);
+		const bitmapBuffer = getContentAtAddress(
+			buffer,
+			parseInt((data.LINKBITMAP as string) ?? '0'),
+			this.lengthFieldSize,
+		);
+		const link: ILink = {
+			...data,
+			bitmapBuffer,
+		} as ILink;
+		return link;
 	}
 }
