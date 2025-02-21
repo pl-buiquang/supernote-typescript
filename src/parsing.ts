@@ -12,6 +12,7 @@ import {
 	ISupernote,
 	ITitle,
 	ILink,
+	IRectangle,
 } from './format';
 
 /*
@@ -521,12 +522,16 @@ export class SupernoteX {
 		const title: ITitle = {
 			TITLESEQNO: '0',
 			TITLELEVEL: '1',
-			TITLERECT: ['0', '0', '0', '0'],
-			TITLERECTORI: ['0', '0', '0', '0'],
 			TITLEBITMAP: '0',
 			TITLEPROTOCOL: 'RATTA_RLE',
 			TITLESTYLE: '1000254',
 			...data,
+			TITLERECT: data['TITLERECT']
+				? ((data['TITLERECT'] as string).split(',') as IRectangle)
+				: ['0', '0', '0', '0'],
+			TITLERECTORI: data['TITLERECTORI']
+				? ((data['TITLERECTORI'] as string).split(',') as IRectangle)
+				: ['0', '0', '0', '0'],
 			bitmapBuffer,
 		};
 		return title;
