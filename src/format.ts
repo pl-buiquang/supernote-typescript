@@ -160,6 +160,8 @@ export interface IRecognitionElement {
 }
 
 export interface IPage {
+	/** Page ID */
+	PAGEID: string;
 	/** Page style (template). */
 	PAGESTYLE: string;
 	/** Page style MD5. */
@@ -182,6 +184,8 @@ export interface IPage {
 	LAYERSEQ: ILayerNames[];
 	/** Total path size. */
 	TOTALPATH: string;
+	/** Starred file shape */
+	FIVESTAR?: string;
 	/** Layer thumbnail type. */
 	THUMBNAILTYPE: string;
 	/** Status of text recognition */

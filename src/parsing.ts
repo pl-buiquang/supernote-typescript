@@ -288,6 +288,7 @@ export class SupernoteX {
 				const recognitionElements =
 					this._parseRecognition(buffer, data['RECOGNTEXT'] as string) || [];
 				return {
+					PAGEID: '0',
 					PAGESTYLE: '0',
 					PAGESTYLEMD5: '0',
 					LAYERSWITCH: '0',
